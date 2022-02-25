@@ -1,0 +1,8 @@
+query CheckoutButton($orderId: ID!) {
+  order(id: $orderId) {
+    id
+    items {
+      id
+    }
+  }
+}

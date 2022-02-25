@@ -1,0 +1,11 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: openjdk11
+  build:
+    commands:
+      - aws s3 cp $S3_SECRETS_BUCKET/config-marquee.json ./config.json --region $AWS_SECRETS_REGION
+      - rm deployspec.yml
+      - aws s3 sync ./ $S3_TARGET_BUCKET --region $AWS_REGION --delete

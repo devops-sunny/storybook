@@ -1,0 +1,37 @@
+query OrderList($storefrontId: ID!) {
+  orders(filter: { storefrontId: $storefrontId }) {
+    ...orderListOrderFields
+  }
+}
+
+subscription OrderListUpdate($storefrontId: ID!) {
+  orderStatusUpdated(storefrontId: $storefrontId) {
+    ...orderListOrderFields
+  }
+}
+
+mutation DeliverOrder($orderId: ID!, $producerId: ID!) {
+  deliverOrder(input: { orderId: $orderId, producerId: $producerId }) {
+    order {
+      ...orderListOrderFields
+    }
+  }
+}
+
+fragment orderListOrderFields on Order {
+  id
+  status
+  items {
+    id
+    modifiedProductVariation {
+      id
+      productVariation {
+        id
+        product {
+          id
+          name
+        }
+      }
+    }
+  }
+}

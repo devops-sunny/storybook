@@ -1,0 +1,33 @@
+overwrite: true
+
+schema: schema.graphql
+
+generates:
+  schema.graphql:
+    plugins:
+      - schema-ast
+
+  libs/common/generated/graph.tsx:
+    documents: libs/common/**/*.graphql
+    plugins:
+      - typescript
+      - typescript-operations
+      - typescript-urql
+  clients/order/src/generated/graph.tsx:
+    documents: clients/order/src/**/*.graphql
+    plugins:
+      - typescript
+      - typescript-operations
+      - typescript-urql
+  clients/pickup/src/generated/graph.tsx:
+    #documents: clients/pickup/src/**/*.graphql
+    plugins:
+      - typescript
+      - typescript-operations
+      - typescript-urql
+  clients/marquee/src/generated/graph.tsx:
+    documents: clients/marquee/src/**/*.graphql
+    plugins:
+      - typescript
+      - typescript-operations
+      - typescript-urql

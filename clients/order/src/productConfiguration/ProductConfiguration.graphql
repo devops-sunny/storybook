@@ -1,0 +1,56 @@
+query ProductConfiguration($productId: ID!) {
+  product(id: $productId) {
+    id
+    name
+    variations {
+      id
+      rules {
+        id
+        value
+        component {
+          id
+          name
+          unitOfMeasure {
+            id
+            name
+          }
+          category {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation CreateModifiedProductVariation($productVariationId: ID!) {
+  createModifiedProductVariation(
+    input: { productVariationId: $productVariationId, modifications: [] }
+  ) {
+    modifiedProductVariation {
+      id
+    }
+  }
+}
+
+mutation CreateOrder($storefrontId: ID!) {
+  createOrder(input: { storefrontId: $storefrontId }) {
+    order {
+      id
+    }
+  }
+}
+
+mutation CreateOrderItem($orderId: ID!, $modifiedProductVariationId: ID!) {
+  createOrderItem(
+    input: {
+      modifiedProductVariationId: $modifiedProductVariationId
+      orderId: $orderId
+    }
+  ) {
+    orderItem {
+      id
+    }
+  }
+}

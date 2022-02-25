@@ -1,0 +1,310 @@
+type Component implements Node {
+  """The ID of the object."""
+  id: ID!
+  name: String!
+  unitOfMeasure: UnitOfMeasure!
+  category: ComponentCategory!
+}
+
+type ComponentCategory implements Node {
+  """The ID of the object."""
+  id: ID!
+  name: String!
+}
+
+input CreateModifiedProductVariationInput {
+  productVariationId: ID!
+  modifications: [ModificationInput!]!
+}
+
+type CreateModifiedProductVariationPayload {
+  modifiedProductVariation: ModifiedProductVariation!
+}
+
+input CreateOrderInput {
+  storefrontId: ID!
+}
+
+input CreateOrderItemInput {
+  orderId: ID!
+  modifiedProductVariationId: ID!
+}
+
+type CreateOrderItemPayload {
+  orderItem: OrderItem!
+}
+
+type CreateOrderPayload {
+  order: Order!
+}
+
+input DeleteOrderInput {
+  orderId: ID!
+}
+
+input DeleteOrderItemInput {
+  orderItemId: ID!
+}
+
+type DeleteOrderItemPayload {
+  orderItemId: ID!
+}
+
+type DeleteOrderPayload {
+  orderId: ID!
+}
+
+input DeliverOrderInput {
+  orderId: ID!
+  producerId: ID
+}
+
+type DeliverOrderPayload {
+  order: Order!
+}
+
+type Enablement {
+  enabled: Boolean!
+  reason: String
+}
+
+type Geolocation {
+  latitude: Float!
+  longitude: Float!
+}
+
+input GeolocationInput {
+  latitude: Float!
+  longitude: Float!
+}
+
+input GeolocationRadiusInput {
+  geolocation: GeolocationInput!
+  radius: Float = 40000
+}
+
+type Modification implements Node {
+  """The ID of the object."""
+  id: ID!
+  value: Float
+}
+
+type ModificationCategoryRule implements Node {
+  """The ID of the object."""
+  id: ID!
+  choiceMax: Int
+  valueMax: Float
+  componentCategory: ComponentCategory!
+  modificationRules: [ModificationRule]!
+}
+
+input ModificationInput {
+  componentId: ID!
+  value: Float
+}
+
+type ModificationRule implements Node {
+  """The ID of the object."""
+  id: ID!
+  min: Float
+  max: Float
+  increment: Float
+  component: Component!
+}
+
+type ModifiedProductVariation implements Node {
+  """The ID of the object."""
+  id: ID!
+  productVariation: ProductVariation!
+  modifications: [Modification]!
+}
+
+type Mutation {
+  """
+  Create a Modified Product Variation. Returns an existing record on match of hashed Modified Product Variation.
+  """
+  createModifiedProductVariation(input: CreateModifiedProductVariationInput!): CreateModifiedProductVariationPayload!
+
+  """Create an Order at the specified Storefront."""
+  createOrder(input: CreateOrderInput!): CreateOrderPayload!
+
+  """Delete an Order (and its Order Items)."""
+  deleteOrder(input: DeleteOrderInput!): DeleteOrderPayload!
+
+  """
+  Initiate production of an Order. Mutation will be rejected if any Order Item is not valid.
+  """
+  produceOrder(input: ProduceOrderInput!): ProduceOrderPayload!
+
+  """
+  Initiate delivery of an Order. Mutation will be rejected if any Order Item status is not ProductionCompleted.
+  """
+  deliverOrder(input: DeliverOrderInput!): DeliverOrderPayload!
+
+  """Create an Order Item associated with an Order."""
+  createOrderItem(input: CreateOrderItemInput!): CreateOrderItemPayload!
+
+  """Update an Order Item associated with an Order."""
+  updateOrderItem(input: UpdateOrderItemInput!): UpdateOrderItemPayload!
+
+  """Delete an Order Item by id."""
+  deleteOrderItem(input: DeleteOrderItemInput!): DeleteOrderItemPayload!
+
+  """Transition Order Item status with an event."""
+  transitionOrderItem(input: TransitionOrderItemInput!): TransitionOrderItemPayload!
+}
+
+"""An object with an ID."""
+interface Node {
+  """The ID of the object."""
+  id: ID!
+}
+
+type Order implements Node {
+  """The ID of the object."""
+  id: ID!
+  status: [OrderItemStatus!]!
+  items: [OrderItem]!
+}
+
+type OrderItem implements Node {
+  """The ID of the object."""
+  id: ID!
+  status: OrderItemStatus!
+  modifiedProductVariation: ModifiedProductVariation!
+}
+
+enum OrderItemEventType {
+  ProductionConfirmed
+  ProductionStarted
+  ProductionFailed
+  ProductionAbandoned
+  ProductionCompleted
+  DeliveryInitiated
+  DeliveryAccepted
+  DeliveryStarted
+  DeliveryFailed
+  DeliveryPresented
+  DeliveryCompleted
+  DeliveryAbandoned
+}
+
+enum OrderItemStatus {
+  Validation
+  ProductionReady
+  ProductionQueued
+  ProductionInProgress
+  ProductionCompleted
+  ProductionFailed
+  ProductionAbandoned
+  DeliveryReady
+  DeliveryQueued
+  DeliveryInProgress
+  DeliveryPresented
+  DeliveryCompleted
+  DeliveryFailed
+  DeliveryAbandoned
+}
+
+input OrdersFilterInput {
+  storefrontId: ID
+}
+
+input ProduceOrderInput {
+  orderId: ID!
+}
+
+type ProduceOrderPayload {
+  order: Order!
+}
+
+type Producer implements Node {
+  """The ID of the object."""
+  id: ID!
+  name: String!
+  serial: String!
+  enablement: Enablement!
+}
+
+type Product implements Node {
+  """The ID of the object."""
+  id: ID!
+  name: String!
+  variations: [ProductVariation]!
+}
+
+type ProductVariation implements Node {
+  """The ID of the object."""
+  id: ID!
+  rules: [ProductVariationRule]!
+  modificationCategoryRules: [ModificationCategoryRule]!
+  product: Product!
+}
+
+type ProductVariationRule implements Node {
+  """The ID of the object."""
+  id: ID!
+  value: Float
+  component: Component!
+}
+
+type Query {
+  storefront(id: ID!): Storefront!
+  storefronts(near: GeolocationRadiusInput): [Storefront!]!
+  productVariation(id: ID!): ProductVariation!
+  product(id: ID!): Product!
+  products: [Product]!
+  orders(filter: OrdersFilterInput): [Order]!
+  order(id: ID!): Order!
+}
+
+type Storefront implements Node {
+  """The ID of the object."""
+  id: ID!
+  name: String!
+  enablement: Enablement!
+  geolocation: Geolocation!
+
+  """The aggregate Product Variations across Producers of this Storefront."""
+  productVariations: [StorefrontProductVariation]!
+
+  """The Producers of this Storefront."""
+  producers: [Producer]!
+}
+
+type StorefrontProductVariation implements Node {
+  """The ID of the object."""
+  id: ID!
+  enablement: Enablement!
+  productVariation: ProductVariation!
+}
+
+type Subscription {
+  orderStatusUpdated(orderId: ID, storefrontId: ID): Order!
+  orderItemStatusUpdated(orderId: ID!): OrderItem!
+}
+
+input TransitionOrderItemInput {
+  id: ID!
+  eventType: OrderItemEventType!
+}
+
+type TransitionOrderItemPayload {
+  orderItem: OrderItem!
+  order: Order!
+}
+
+type UnitOfMeasure implements Node {
+  """The ID of the object."""
+  id: ID!
+  name: String!
+}
+
+input UpdateOrderItemInput {
+  orderItemId: ID!
+  modifiedProductVariationId: ID!
+}
+
+type UpdateOrderItemPayload {
+  orderItem: OrderItem!
+}

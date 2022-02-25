@@ -1,0 +1,6 @@
+query ProductMenu {
+  products {
+    id
+    name
+  }
+}

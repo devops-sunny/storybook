@@ -1,0 +1,17 @@
+name: Setup
+
+inputs:
+  node-version:
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Use Node.js ${{ inputs.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ inputs.node-version }}
+    - run: yarn
+      shell: bash
+    - run: yarn run generate:code:graph
+      shell: bash

@@ -1,0 +1,159 @@
+name: client
+
+on: [push]
+
+jobs:
+  test:
+    timeout-minutes: 30
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x]
+        client-name: [order, pickup, marquee]
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/setup
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: yarn test ${{ matrix.client-name }}
+
+  build:
+    timeout-minutes: 30
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x]
+        client-name: [order, pickup, marquee]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: fix broken tag annotation # https://github.com/actions/checkout/issues/290
+        run: git fetch --force --tags
+
+      - name: Generate build info
+        id: build-info
+        run: |
+          BUILD_INFO=$(yarn run --silent generate:buildInfo -p ${{ matrix.client-name }} -o public/buildInfo.json src/generated/buildInfo.json -b ${{ github.run_number }})
+          BRANCH=$(echo $BUILD_INFO | jq -r .branch)
+          CLEAN_BRANCH=${BRANCH//[\/]/-}
+          echo "::set-output name=version::$(echo $BUILD_INFO | jq -r .version)"
+          echo "::set-output name=commitTag::$(echo $BUILD_INFO | jq -r .tag)"
+          echo "::set-output name=branchName::$(echo $BUILD_INFO | jq -r .branch)"
+          echo "::set-output name=commitHash::$(echo $BUILD_INFO | jq -r .commit)"
+          echo "::set-output name=timestamp::$(echo $BUILD_INFO | jq -r .timestamp)"
+          echo "::set-output name=build::$(echo $BUILD_INFO | jq -r .build)"
+          echo "::set-output name=cleanBranchName::$(echo $CLEAN_BRANCH)"
+        shell: bash
+
+      - name: Concatenate build version and branch
+        id: build-version
+        run: |
+          echo "::set-output name=buildVersion::${{ steps.build-info.outputs.version }}-${{steps.build-info.outputs.cleanBranchName}}"
+
+      - run: yarn run build clients/${{ matrix.client-name }}
+
+      - name: zip build
+        id: zip-app
+        run: |
+          cd clients/${{ matrix.client-name }}/dist 
+          zip -r /tmp/client-${{ matrix.client-name }}.zip ./*
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_BUILD }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_BUILD }}
+          aws-region: us-east-1
+
+      - name: send to aws
+        id: send-to-aws
+        run: aws s3 cp /tmp/client-${{ matrix.client-name }}.zip s3://artifacts.int.build.briggo.io/client-cmbg-${{ matrix.client-name }}/${{ steps.build-version.outputs.buildVersion }}/client-cmbg-${{ matrix.client-name }}-${{ steps.build-version.outputs.buildVersion }}.zip
+
+      - name: Deploy develop branch via AWS Lambda
+        if: github.ref == 'refs/heads/develop'
+        id: deploy-app
+        uses: gagoar/invoke-aws-lambda@master
+        with:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_CMBG_DEV }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_CMBG_DEV }}
+          FunctionName: sfc-dev-us-software-deploy
+          Payload: '[{"s3-website": "${{ matrix.client-name }}-site","artifact": "client-cmbg-${{ matrix.client-name }}", "version": "${{ steps.build-version.outputs.buildVersion }}"}]'
+
+  storybook:
+    timeout-minutes: 30
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [14.x]
+        client-name: [order, pickup, marquee]
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: ./.github/actions/setup
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: fix broken tag annotation # https://github.com/actions/checkout/issues/290
+        run: git fetch --force --tags
+
+      - name: Generate build info
+        id: build-info
+        run: |
+          BUILD_INFO=$(yarn run --silent generate:buildInfo -p ${{ matrix.client-name }} -o public/buildInfo.json src/generated/buildInfo.json -b ${{ github.run_number }})
+          BRANCH=$(echo $BUILD_INFO | jq -r .branch)
+          CLEAN_BRANCH=${BRANCH//[\/]/-}
+          echo "::set-output name=version::$(echo $BUILD_INFO | jq -r .version)"
+          echo "::set-output name=commitTag::$(echo $BUILD_INFO | jq -r .tag)"
+          echo "::set-output name=branchName::$(echo $BUILD_INFO | jq -r .branch)"
+          echo "::set-output name=commitHash::$(echo $BUILD_INFO | jq -r .commit)"
+          echo "::set-output name=timestamp::$(echo $BUILD_INFO | jq -r .timestamp)"
+          echo "::set-output name=build::$(echo $BUILD_INFO | jq -r .build)"
+          echo "::set-output name=cleanBranchName::$(echo $CLEAN_BRANCH)"
+        shell: bash
+
+      - name: Concatenate build version and branch
+        id: build-version
+        run: |
+          echo "::set-output name=buildVersion::${{ steps.build-info.outputs.version }}-${{steps.build-info.outputs.cleanBranchName}}"
+
+      - run: yarn build-storybook -c clients/${{ matrix.client-name }}/.storybook -o storybook-static/${{ matrix.client-name }}
+
+      - name: zip build
+        id: zip-storybook
+        run: |
+          cd storybook-static/${{ matrix.client-name }} 
+          zip -r /tmp/${{ matrix.client-name }}.zip ./*
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_BUILD }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_BUILD }}
+          aws-region: us-east-1
+
+      - name: send storybook to aws
+        id: send-to-aws
+        run: aws s3 cp /tmp/${{ matrix.client-name }}.zip s3://artifacts.int.build.briggo.io/client-cmbg-${{ matrix.client-name }}-storybook/${{ steps.build-version.outputs.buildVersion }}/client-cmbg-${{ matrix.client-name }}-storybook-${{ steps.build-version.outputs.buildVersion }}.zip
+
+      - name: Deploy develop storybook via AWS Lambda
+        if: github.ref == 'refs/heads/develop'
+        id: deploy-app
+        uses: gagoar/invoke-aws-lambda@master
+        with:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID_CMBG_DEV }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY_CMBG_DEV }}
+          FunctionName: sfc-dev-us-software-deploy
+          Payload: '[{"s3-website": "${{ matrix.client-name }}-storybook-site","artifact": "client-cmbg-${{ matrix.client-name }}-storybook", "version": "${{ steps.build-version.outputs.buildVersion }}"}]'

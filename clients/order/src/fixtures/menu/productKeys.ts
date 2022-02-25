@@ -1,0 +1,26 @@
+export const productKeys = [
+  'ALMOND_MILK_LATTE',
+  'AMERICANO',
+  'CAFE_AU_LAIT',
+  'CAPPUCCINO',
+  'CARAMEL_LATTE',
+  'CARAMEL_MACCHIATO',
+  'COFFEE',
+  'ESPRESSO',
+  'HOT_CHOCOLATE',
+  'ICED_ALMOND_MILK_LATTE',
+  'ICED_CARAMEL_LATTE',
+  'ICED_CARAMEL_MACCHIATO',
+  'ICED_COFFEE',
+  'ICED_LATTE',
+  'ICED_VANILLA_LATTE',
+  'LATTE',
+  'MOCHA',
+  'MOCHA_MACCHIATO',
+  'SKINNY_HOT_CHOCOLATE',
+  'STEAMED_MILK',
+  'VANILLA_LATTE',
+  'VANILLA_STEAMER',
+] as const;
+
+export type ProductKey = typeof productKeys[number];

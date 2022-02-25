@@ -1,0 +1,30 @@
+query FocusedOrder($orderId: ID!) {
+  order(id: $orderId) {
+    ...focusedOrderOrderFields
+  }
+}
+
+subscription FocusedOrderUpdates($orderId: ID!) {
+  orderStatusUpdated(orderId: $orderId) {
+    ...focusedOrderOrderFields
+  }
+}
+
+fragment focusedOrderOrderFields on Order {
+  id
+  status
+  items {
+    id
+    status
+    modifiedProductVariation {
+      id
+      productVariation {
+        id
+        product {
+          id
+          name
+        }
+      }
+    }
+  }
+}

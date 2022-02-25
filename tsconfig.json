@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["DOM", "DOM.Iterable", "ESNext"],
+    "allowJs": false,
+    "skipLibCheck": false,
+    "esModuleInterop": false,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "noUncheckedIndexedAccess": true,
+    "baseUrl": "./",
+    "paths": {
+      "@bb/common": ["libs/common"],
+      "@bb/common/*": ["libs/common/*"],
+      "@bb/marquee": ["clients/marquee/src"],
+      "@bb/marquee/*": ["clients/marquee/src/*"],
+      "@bb/order": ["clients/order/src"],
+      "@bb/order/*": ["clients/order/src/*"],
+      "@bb/pickup": ["clients/pickup/src"],
+      "@bb/pickup/*": ["clients/pickup/src/*"]
+    }
+  },
+  "include": ["clients", "libs", "vite.config.ts"]
+}

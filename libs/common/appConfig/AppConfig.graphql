@@ -1,0 +1,10 @@
+query AppConfig {
+  storefronts {
+    id
+    name
+    producers {
+      id
+      serial
+    }
+  }
+}

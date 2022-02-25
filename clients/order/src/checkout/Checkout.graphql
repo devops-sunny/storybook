@@ -1,0 +1,40 @@
+query Checkout($orderId: ID!) {
+  order(id: $orderId) {
+    id
+    status
+    items {
+      id
+      status
+      modifiedProductVariation {
+        id
+        productVariation {
+          id
+          product {
+            id
+            name
+          }
+          rules {
+            id
+            component {
+              id
+              name
+              unitOfMeasure {
+                id
+                name
+              }
+            }
+            value
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation ProduceOrder($orderId: ID!) {
+  produceOrder(input: { orderId: $orderId }) {
+    order {
+      id
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "services": {
+    "gateway": {
+      "gql": {
+        // for local cluster development and testing
+        // "endpoint": "http://localhost:3100/graphql",
+        // "subscriptionEndpoint": "wss://localhost:3100/graphql"
+        // for ordinary use
+        "endpoint": "https://gateway.cmbg-dev.baristabot.costacoffee.com/graphql",
+        "subscriptionEndpoint": "https://gateway.cmbg-dev.baristabot.costacoffee.com/graphql"
+      }
+    }
+  },
+  "clientName": "client"
+}
